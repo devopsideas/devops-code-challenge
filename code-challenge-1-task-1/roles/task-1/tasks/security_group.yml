@@ -1,0 +1,46 @@
+---
+
+- name: Create Security Group for ELB and public access
+  ec2_group:
+    name: "External HTTP and ssh Access"
+    description: "External HTTP and ssh Access"
+    vpc_id: "{{ vpc_id }}"
+    region: "{{ aws_region }}"
+    rules:
+      - proto: "tcp"
+        from_port: "80"
+        to_port: "80"
+        cidr_ip: "0.0.0.0/0"
+      - proto: "tcp"
+        from_port: "22"
+        to_port: "22"
+        cidr_ip: "{{ my_ip }}/32" 
+  register: external_sg
+
+
+- name: Set Main SG ID
+  set_fact:
+    external_sg_id: "{{ external_sg.group_id }}"
+
+
+- name: Create Private Security Group
+  ec2_group:
+    name: "Private Instances SG"
+    description: "Private Instances SG"
+    vpc_id: "{{ vpc_id }}"
+    region: "{{ aws_region }}"
+    rules:
+      - proto: "tcp"
+        from_port: "22"
+        to_port: "22"
+        group_id: "{{ external_sg_id }}"
+      - proto: "tcp"
+        from_port: "80"
+        to_port: "80"
+        group_id: "{{ external_sg_id }}"
+  register: internal_sg
+
+
+- name: Set Internal SG ID
+  set_fact:
+    internal_sg_id: "{{ internal_sg.group_id }}"

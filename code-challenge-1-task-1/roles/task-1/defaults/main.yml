@@ -1,0 +1,43 @@
+---
+
+# AWS Region
+aws_region: "ap-south-1"
+
+# VPC Information
+vpc_name: "Devopsideas-VPC"
+vpc_cidr_block: "10.0.0.0/16"
+
+
+# Subnets
+public_subnet_1_cidr:  "10.0.0.0/24"
+private_subnet_1_cidr: "10.0.1.0/24"
+
+
+# Availability Zome
+vpc_availability_zone: a
+
+
+# IP to allow ssh access for
+my_ip: < ip address >
+
+
+# EC2 Details
+ec2_key: < ec2 key >
+
+
+# EC2 instance type
+instance_type: t2.micro
+
+
+# AMI id of base image
+base_ami: ami-cdbdd7a2
+
+
+# Auto Scaling Configuration
+instance_min: 1
+instance_max: 3
+
+
+# Metric Alarm configuration
+min_threshold: 80.0
+max_threshold: 60.0

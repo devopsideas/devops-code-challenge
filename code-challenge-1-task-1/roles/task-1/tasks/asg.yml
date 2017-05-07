@@ -1,0 +1,79 @@
+---
+
+- name: Configure Auto Scaling Group
+  ec2_asg:
+     region: "{{ aws_region }}"
+     name: qube_asg
+     launch_config_name: qube-web-lc
+     availability_zones: "{{ aws_region }}{{ vpc_availability_zone }}"
+     health_check_type: ELB
+     health_check_period: 300
+     desired_capacity: 1
+     min_size: "{{ instance_min }}"
+     max_size: "{{ instance_max }}"
+     load_balancers:
+         - qube-ELB
+     vpc_zone_identifier: "{{ private_subnet_id }}"
+     state: present
+  register: asg_result
+
+- debug: var=asg_result.name
+
+- name: Configure Scaling Policies
+  ec2_scaling_policy:
+     region: "{{ aws_region }}"
+     name: "{{ item.name }}"
+     asg_name: qube_asg
+     state: present
+     adjustment_type: "{{ item.adjustment_type }}"
+     min_adjustment_step: "{{ item.min_adjustment_step }}"
+     scaling_adjustment: "{{ item.scaling_adjustment }}"
+     cooldown: "{{ item.cooldown }}"
+  with_items:
+     - name: "Increase Group Size"
+       adjustment_type: "ChangeInCapacity"
+       scaling_adjustment: +1
+       min_adjustment_step: 1
+       cooldown: 180
+     - name: "Decrease Group Size"
+       adjustment_type: "ChangeInCapacity"
+       scaling_adjustment: -1
+       min_adjustment_step: 1
+       cooldown: 300
+  register: sp_result
+
+
+- name: Determine Metric Alarm configuration
+  set_fact:
+    metric_alarms:
+      - name: qube_asg_ScaleUp
+        comparison: ">="
+        threshold: "{{ min_threshold }}"
+        alarm_actions:
+          - "{{ sp_result.results[0].arn }}"
+      - name: qube_asg_ScaleDown
+        comparison: "<="
+        threshold: "{{ max_threshold }}"
+        alarm_actions:
+          - "{{ sp_result.results[1].arn }}"
+
+
+- name: Configure Metric Alarms and link to Scaling Policies
+  ec2_metric_alarm:
+    region: "{{ aws_region }}"
+    name: "{{ item.name }}"
+    state: present
+    metric: "CPUUtilization"
+    namespace: "AWS/EC2"
+    statistic: "Average"
+    comparison: "{{ item.comparison }}"
+    threshold: "{{ item.threshold }}"
+    period: 60
+    evaluation_periods: 5
+    unit: "Percent"
+    dimensions:
+      AutoScalingGroupName: qube_asg
+    alarm_actions: "{{ item.alarm_actions }}"
+  with_items: "{{ metric_alarms }}"
+  when: asg_result.max_size > 1
+  register: ma_result

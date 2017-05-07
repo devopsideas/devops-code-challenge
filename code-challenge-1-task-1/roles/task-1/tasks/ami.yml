@@ -1,0 +1,29 @@
+---
+
+- name: Create AMI
+  ec2_ami:
+    region: "{{ aws_region }}"
+    instance_id: "{{ ec2_id }}"
+    name: qube-web-ami
+    wait: yes
+    state: present
+  register: ami
+
+- name: Get the image id if AMI is already created
+  ec2_ami_find:
+    name: qube-web-ami
+    region: "{{ aws_region }}"
+  register: ami
+  when: not ami.changed
+
+
+- name: Set image id to a variable
+  set_fact:
+     ami_id: "{{ ami.image_id }}" 
+  when: ami.changed
+
+
+- name: Set image id to a variable ( existing AMI )
+  set_fact:
+     ami_id: "{{ ami.results[0].ami_id }}"                      
+  when: not ami.changed

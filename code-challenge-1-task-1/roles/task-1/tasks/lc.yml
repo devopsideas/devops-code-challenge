@@ -1,0 +1,11 @@
+---
+
+- name: Create Launch Configuration
+  ec2_lc:
+     region: "{{ aws_region }}"
+     name: qube-web-lc
+     image_id: "{{ ami_id }}"
+     key_name: "{{ ec2_key }}"
+     instance_type: t2.micro
+     security_groups: "{{ external_sg_id }}"
+     instance_profile_name: ec2_role 

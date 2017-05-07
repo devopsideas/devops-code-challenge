@@ -1,0 +1,23 @@
+---
+
+- name: Setting up Load Balancer
+  ec2_elb_lb:
+     name: qube-ELB
+     state: present
+     region: "{{ aws_region }}"
+     subnets: "{{ public_subnet_id }}"
+     security_group_ids: "{{ external_sg_id }}"
+     listeners:
+       - protocol: http
+         load_balancer_port: 80
+         instance_port: 80
+  register: elb
+
+- name: Add EC2 server to ELB
+  ec2_elb:
+     instance_id: "{{ ec2_id }}"
+     ec2_elbs: qube-ELB
+     region: "{{ aws_region }}"
+     state: present
+     wait: yes
+     wait_timeout: 600

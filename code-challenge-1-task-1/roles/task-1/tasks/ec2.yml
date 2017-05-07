@@ -1,0 +1,26 @@
+---
+
+- name: Provision EC2 instance 
+  ec2:
+    key_name: "{{ ec2_key }}"
+    region: "{{ aws_region }}"
+    instance_type: "{{ instance_type }}"
+    image: "{{ base_ami }}"
+    group_id: "{{ internal_sg_id }}"
+    wait: yes
+    instance_tags:
+      Name: qube-web
+    count_tag:
+      Name: qube-web
+    exact_count: 1
+    user_data: "{{ lookup('file', '../files/ec2_lamp') }}"
+    vpc_subnet_id: "{{ private_subnet_id }}"
+    instance_profile_name: ec2_role
+  register: created_instances
+
+
+- name: Set Instance ID in variable
+  set_fact:
+    ec2_id: "{{ created_instances.tagged_instances[0].id }}"
+
+

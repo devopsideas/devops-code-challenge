@@ -1,0 +1,15 @@
+---
+# tasks file for qube_ansible
+
+- include: vpc.yml
+- include: subnet.yml
+- include: gateway.yml
+- include: nat.yml
+- include: route.yml
+- include: security_group.yml
+- include: ec2_role.yml
+- include: ec2.yml
+- include: elb.yml
+- include: ami.yml
+- include: lc.yml
+- include: asg.yml
